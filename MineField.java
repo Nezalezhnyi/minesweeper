@@ -1,4 +1,5 @@
 import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
+import java.util.List;
 
 /**
  * Write a description of class MineField here.
@@ -8,8 +9,9 @@ import greenfoot.*;  // (World, Actor, GreenfootImage, Greenfoot and MouseInfo)
  */
 public class MineField extends World
 {
-    private int fieldH, fieldW, mines;
+    private int fieldH, fieldW, mines, level;
     private Counter flags, timer;
+    private Restart restartButton;
     /**
      * Constructor for objects of class MineField.
      * 
@@ -19,18 +21,24 @@ public class MineField extends World
         this(1);
     }
 
-    public MineField(int level)
+    public MineField(int lvl)
     {
         // Create a new world with 600x400 cells with a cell size of 1x1 pixels.
         super(34, 20, 33);
-        switch(level)
+        level = lvl;
+        switch(lvl)
         {
             case 1: fieldH = 9; fieldW = 9; mines = 10; break;
             case 2: fieldH = 16; fieldW = 16; mines = 40; break;
             case 3: fieldH = 16; fieldW = 32; mines = 99; break;
         }
         addPlots();
+        addMines();
         prepare();
+    }
+    public int getLevel()
+    {
+        return level;
     }
     public void addFlags(int val)
     {
@@ -48,14 +56,23 @@ public class MineField extends World
         for (int i = 0; i < fieldW; i++)
             for (int j = 0; j < fieldH; j++)
             {
-                boolean plant = Greenfoot.getRandomNumber(fieldW*fieldH) < mines;
-                if (plant)
-                mineCount++;
-                if (mineCount == mines)
-                plant = false;
-                Plot p = new Plot(plant);
+                Plot p = new Plot();
                 addObject(p, i+xoffset, j+3);
             }
+    }
+    private void addMines()
+    {
+        int count = 0;
+        List <Plot> plots = getObjects(Plot.class);
+        while (count < mines)
+        {
+            Plot plot = plots.get(Greenfoot.getRandomNumber(plots.size()));
+            if (!plot.isMine())
+            {
+                plot.setMine();
+                count++;
+            }
+        }
     }
     /**
      * Prepare the world for the start of the program.
@@ -70,9 +87,16 @@ public class MineField extends World
         flags.setValue(mines);
         timer = new Counter("Timer: ");
         addObject(timer,29,1);
-        Restart restart = new Restart();
-        addObject(restart, 16, 1);
+        restartButton = new Restart();
+        addObject(restartButton, 16, 1);
         button.setLocation(2,19);
         button.setLocation(1,19);
+    }
+    public void GameOverLose()
+    {
+        restartButton.setState(false);
+        List <Plot> plots = getObjects(Plot.class);
+        for (Plot p:plots)
+            p.revealMine();
     }
 }
